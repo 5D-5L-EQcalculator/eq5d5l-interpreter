@@ -1,71 +1,944 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>EQ-5D-5L Thai Interpreter | Technical Prototype</title><style>
-:root{font-family:system-ui,'Noto Sans Thai',sans-serif;color:#183047;background:#f3f7fa}*{box-sizing:border-box}body{margin:0}header{background:linear-gradient(120deg,#123e55,#197d89);color:white;padding:36px max(20px,calc((100vw - 1050px)/2))}h1{margin:0;font-size:clamp(25px,4vw,36px)}header p{max-width:760px;line-height:1.7}main{max-width:1050px;margin:26px auto;padding:0 18px}.card{background:#fff;border:1px solid #dce7ed;border-radius:17px;padding:24px;margin:18px 0;box-shadow:0 5px 20px #1a40500a}h2{font-size:21px;margin:0 0 15px}h3{margin:0 0 8px}.note{padding:14px;border-radius:10px;background:#eef5f7;line-height:1.7}.warn{background:#fff5e6;border-left:4px solid #a66b12}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}.field{border:1px solid #dce7ed;border-radius:12px;padding:16px;min-width:0}.field>label{display:block;font-weight:650;margin-bottom:8px}.field legend{font-weight:750;font-size:18px;padding:0 5px}.field fieldset{min-width:0}.field small{display:block;color:#526775;margin-bottom:9px}select,input[type=number],input[type=file]{width:100%;padding:12px;border:1px solid #9fb5c2;border-radius:9px;background:white;font:inherit;color:#173449}select:focus,input:focus,button:focus-visible{outline:3px solid #79c9dc}button{border:0;border-radius:9px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;background:#116f80;color:#fff}button.secondary{background:#e7f0f4;color:#23495b}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.metric{background:#edf5f7;border-radius:12px;padding:20px}.metric .value{font-size:30px;font-weight:800;overflow-wrap:anywhere}.metric .name{font-size:14px;color:#425d6b}#status{margin-top:12px;line-height:1.7}#status.error{color:#a42c28}#status.ok{color:#176a53}.hidden{display:none}.details{width:100%;border-collapse:collapse;margin-top:15px}.details td,.details th{border-bottom:1px solid #dce7ed;padding:10px;text-align:left}.details th{background:#f0f6f8}a{color:#096e85;overflow-wrap:anywhere}footer{padding:20px;text-align:center;color:#5b6d77;font-size:13px}ul{line-height:1.8}code{background:#eef3f5;padding:2px 5px;border-radius:4px}@media(max-width:550px){.card{padding:16px}.details{font-size:13px}header{padding:27px 20px}}
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EQ-5D-5L Thai Interpreter</title>
+    <style>
+      :root {
+        --bg: #f4f8fb;
+        --panel: #ffffff;
+        --soft-blue: #eaf4ff;
+        --blue: #1d5fa3;
+        --blue-deep: #0d2d4e;
+        --pink-soft: #fdf0f5;
+        --pink-border: #f3bfd3;
+        --pink-fill: #ffeaf2;
+        --text: #18324a;
+        --muted: #59758c;
+        --line: #dfeaf2;
+        --success: #099d6a;
+        --warning: #d8672d;
+        --danger: #b9373d;
+        --shadow: 0 10px 26px rgba(19, 47, 73, 0.08);
+      }
 
-/* EQ VAS: synchronized slider and editable numeric field. */
-.vas-control{margin-top:16px}.vas-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}.vas-value{font-weight:800;color:#116f80;background:#e8f5f7;padding:7px 13px;border-radius:10px}.vas-range{display:block;width:100%;height:12px;accent-color:#087e91;cursor:pointer;touch-action:pan-y}.vas-scale{display:flex;justify-content:space-between;color:#526775;font-size:14px;margin-top:7px}.vas-input{display:flex;gap:12px;align-items:center;margin-top:18px;flex-wrap:wrap}.vas-input label{font-weight:650;margin:0}.vas-input input{width:160px;max-width:100%}.vas-input span{color:#526775}.vas-top input[type=number]{width:108px;max-width:38vw;text-align:right;font-size:30px;font-weight:800;color:#116f80;background:#e8f5f7;border:1px solid #a5d3dc;padding:5px 12px;border-radius:10px;font-variant-numeric:tabular-nums}.vas-top input[type=number]::-webkit-inner-spin-button,.vas-top input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.vas-top input[type=number]{-moz-appearance:textfield}
+      * { box-sizing: border-box; }
 
-/* Tap-friendly, single-choice level cards instead of native dropdown menus. */
-.level-options{display:grid;gap:9px;margin-top:13px}
-.level-choice{position:relative;display:block;cursor:pointer}
-.level-choice input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.level-choice .choice-content{display:flex;align-items:center;gap:12px;border:1.5px solid #d5e2e9;border-radius:11px;padding:13px 14px;min-height:56px;background:#fff;transition:background .12s,border-color .12s;line-height:1.5}
-.choice-number{flex:0 0 auto;display:grid;place-items:center;width:37px;height:37px;border-radius:9px;background:#e9f1f5;color:#28536a;font-weight:800}
-.choice-description{flex:1;font-size:15px}
-.level-choice:hover .choice-content{border-color:#6faabb;background:#f5fbfc}
-.level-choice input:checked+.choice-content{border-color:#087d90;background:#e9f7f9;box-shadow:inset 0 0 0 1px #087d90}
-.level-choice input:checked+.choice-content .choice-number{background:#087d90;color:white}
-.level-choice input:focus-visible+.choice-content{outline:3px solid #79c9dc;outline-offset:2px}
-@media(max-width:550px){.level-choice .choice-content{min-height:60px;padding:11px}.choice-description{font-size:14px}}
-</style></head><body><header><h1>EQ-5D-5L Interpreter</h1><p>ระบบบันทึกรหัสสุขภาพและคำนวณ Thai EQ-5D-5L Index Value สำหรับการทดสอบทางวิชาการ • ประมวลผลบนอุปกรณ์ของคุณ</p></header><main>
-<section class="card"><h2>1. กรอกข้อมูล</h2><p>เลือกคำอธิบายที่ตรงกับระดับปัญหาในแต่ละด้านมากที่สุด (1 = ไม่มีปัญหา, 5 = มีปัญหาหรือข้อจำกัดมากที่สุด)</p><form id="assessment" novalidate><div class="grid" id="fields"></div><div class="field" style="margin-top:14px"><label for="vas">EQ VAS (0–100)</label><small>0 = สุขภาพแย่ที่สุดเท่าที่จินตนาการได้ • 100 = สุขภาพดีที่สุดเท่าที่จินตนาการได้</small><div class="vas-control"><div class="vas-top"><label for="vas" style="margin:0">คะแนนสุขภาพของคุณ</label><input id="vas" type="number" min="0" max="100" step="1" inputmode="numeric" aria-label="กรอกคะแนน EQ VAS 0 ถึง 100" required></div><input id="vasSlider" class="vas-range" type="range" min="0" max="100" step="1" value="0" aria-label="เลื่อนเพื่อระบุคะแนน EQ VAS จาก 0 ถึง 100"><div class="vas-scale"><span>0 — แย่ที่สุด</span><span>50</span><span>100 — ดีที่สุด</span></div></div></div><div class="actions"><button type="submit">แปลผล</button><button type="button" class="secondary" id="clear">ล้างข้อมูล</button></div></form><div id="status" role="alert" aria-live="polite"></div></section>
-<section class="card hidden" id="results"><h2>2. ผลการประเมิน</h2><div class="metrics"><div class="metric"><div class="name">Health State Profile</div><div class="value" id="profile"></div></div><div class="metric"><div class="name">Thai EQ-5D-5L Index</div><div class="value" id="index"></div></div><div class="metric"><div class="name">EQ VAS</div><div class="value" id="vasOut"></div></div></div><p id="summary"></p><h3>รายละเอียดระดับคำตอบ</h3><p>คำอธิบายเป็นข้อความที่เรียบเรียงใหม่เพื่อการสาธิด ไม่ใช่ถ้อยคำฉบับทางการที่ได้รับอนุญาต</p><table class="details"><thead><tr><th>มิติ</th><th>ระดับที่เลือก</th><th>คำอธิบายเชิงรหัส</th></tr></thead><tbody id="details"></tbody></table><p class="note">Index เป็นค่าอรรถประโยชน์ที่คำนวณจากค่าน้ำหนักประชากรไทย ไม่ใช่เปอร์เซ็นต์สุขภาพ ส่วน EQ VAS เป็นการให้คะแนนสุขภาพตนเองโดยผู้ตอบ ไม่ใช่ Index และไม่ใช่เปอร์เซ็นต์ ระบบไม่ใช้ผลเพื่อวินิจฉัยโรคหรือแบ่งระดับดี/ปานกลาง/แย่</p><p class="note warn">ความละเอียด: ค่าสัมประสิทธิ์ในแหล่งอ้างอิงเปิดเผย 3 ตำแหน่งทศนิยม จึงรายงาน Index จากชุดค่าน้ำหนักที่ปัดเศษแล้ว ไม่ใช่ค่าความละเอียดเต็มจากแบบจำลองต้นฉบับ</p></section>
-<section class="card"><h2>3. แหล่งอ้างอิงและสูตร</h2><p><strong>สูตร:</strong> Index = 1 − ผลรวมค่าน้ำหนักของทั้ง 5 มิติ ตามระดับที่เลือก (ระดับ 1 = 0) ไม่มีค่าคงที่เพิ่มเติมในตาราง 4.29</p><p>Roudijk B, Ludwig K, Devlin N. (2022). <em>EQ-5D-5L Value Set Summaries</em>, Table 4.29: Thailand. <a href="https://www.ncbi.nlm.nih.gov/books/NBK589305/table/ch4.Tab29/" target="_blank" rel="noopener noreferrer">NCBI Bookshelf</a>.</p><p>Pattanaphesaj J, et al. (2018). <em>The EQ-5D-5L Valuation study in Thailand.</em> Expert Review of Pharmacoeconomics & Outcomes Research, 18(5), 551–558. <a href="https://doi.org/10.1080/14737167.2018.1494574" target="_blank" rel="noopener noreferrer">DOI</a>.</p><p>EuroQol Research Foundation. <a href="https://euroqol.org/information-and-support/user-support/faqs/" target="_blank" rel="noopener noreferrer">FAQ และสิทธิ์การใช้แบบสอบถามดิจิทัล</a> • <a href="https://registration.euroqol.org/" target="_blank" rel="noopener noreferrer">ลงทะเบียนใช้งาน</a>.</p></section>
-</main><footer>Academic technical prototype • Local-only processing • © EuroQol Research Foundation สำหรับเครื่องมือ EQ-5D™</footer>
-<script>
-'use strict';
-// Published, rounded Thai EQ-5D-5L decrements: Roudijk et al. (2022), Table 4.29.
-const dimensions=[['mobility','การเคลื่อนไหว','Mobility'],['selfcare','การดูแลตนเอง','Self-care'],['usualactivities','กิจกรรมตามปกติ','Usual activities'],['pain','ความเจ็บปวดหรือความไม่สบายตัว','Pain/Discomfort'],['anxiety','ความวิตกกังวลหรือภาวะซึมเศร้า','Anxiety/Depression']];
-const weights=[[0,.066,.087,.211,.371],[0,.058,.071,.193,.250],[0,.058,.071,.154,.248],[0,.056,.067,.207,.256],[0,.058,.096,.233,.295]];
-// Plain-language prototype descriptions, NOT the official copyrighted questionnaire wording.
-const descriptions=[
- ['ไม่มีปัญหาในการเดิน','เดินได้แต่มีปัญหาเล็กน้อย','เดินได้แต่มีปัญหาปานกลาง','เดินได้ลำบากอย่างมาก','ไม่สามารถเดินได้'],
- ['ไม่มีปัญหาในการอาบน้ำหรือแต่งตัว','อาบน้ำหรือแต่งตัวได้แต่มีปัญหาเล็กน้อย','อาบน้ำหรือแต่งตัวได้แต่มีปัญหาปานกลาง','อาบน้ำหรือแต่งตัวได้ลำบากอย่างมาก','ไม่สามารถอาบน้ำหรือแต่งตัวด้วยตนเองได้'],
- ['ทำกิจกรรมตามปกติได้โดยไม่มีปัญหา','ทำกิจกรรมตามปกติได้แต่มีปัญหาเล็กน้อย','ทำกิจกรรมตามปกติได้แต่มีปัญหาปานกลาง','ทำกิจกรรมตามปกติได้ลำบากอย่างมาก','ไม่สามารถทำกิจกรรมตามปกติได้'],
- ['ไม่มีอาการเจ็บปวดหรือไม่สบายตัว','มีอาการเจ็บปวดหรือไม่สบายตัวเล็กน้อย','มีอาการเจ็บปวดหรือไม่สบายตัวปานกลาง','มีอาการเจ็บปวดหรือไม่สบายตัวอย่างมาก','มีอาการเจ็บปวดหรือไม่สบายตัวอย่างรุนแรงที่สุด'],
- ['ไม่มีความวิตกกังวลหรือซึมเศร้า','วิตกกังวลหรือซึมเศร้าเล็กน้อย','วิตกกังวลหรือซึมเศร้าปานกลาง','วิตกกังวลหรือซึมเศร้าอย่างมาก','วิตกกังวลหรือซึมเศร้าอย่างรุนแรงที่สุด']
-];
-const fields=document.getElementById('fields');
-dimensions.forEach(([id,th,en],i)=>{
-  const div=document.createElement('fieldset');div.className='field';div.id=`group-${id}`;
-  const legend=document.createElement('legend');legend.textContent=`${i+1}. ${th}`;
-  const small=document.createElement('small');small.textContent=en;
-  const options=document.createElement('div');options.className='level-options';
-  [1,2,3,4,5].forEach(n=>{
-    const label=document.createElement('label');label.className='level-choice';
-    const radio=document.createElement('input');radio.type='radio';radio.name=id;radio.value=String(n);radio.required=true;
-    radio.setAttribute('aria-label',`ระดับ ${n}: ${descriptions[i][n-1]}`);
-    const content=document.createElement('span');content.className='choice-content';
-    const number=document.createElement('span');number.className='choice-number';number.textContent=String(n);
-    const desc=document.createElement('span');desc.className='choice-description';desc.textContent=descriptions[i][n-1];
-    content.append(number,desc);label.append(radio,content);options.append(label);
-  });
-  div.append(legend,small,options);fields.append(div);
-});
-const $=id=>document.getElementById(id);
-// Two-way sync: moving the range writes the number; typing a valid number moves the range.
-// Leave blank or invalid numeric entries unchanged so validation can report them accurately.
-const vasSlider=$('vasSlider'),vasNumber=$('vas');
-vasSlider.addEventListener('input',()=>{vasNumber.value=vasSlider.value;});
-vasNumber.addEventListener('input',()=>{const raw=vasNumber.value.trim();const n=Number(raw);if(raw!=='' && Number.isInteger(n) && n>=0 && n<=100){vasSlider.value=String(n);}});
+      html { scroll-behavior: smooth; }
 
-function status(message,error=false){$('status').textContent=message;$('status').className=error?'error':'ok'}
-function validate(){const values=dimensions.map(([id])=>document.querySelector(`input[name="${id}"]:checked`)?.value ?? '');if(values.some(v=>!['1','2','3','4','5'].includes(v)))throw Error('กรุณาเลือกระดับ 1–5 ให้ครบทั้ง 5 มิติ');const raw=$('vas').value.trim();if(!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(raw)||!Number.isInteger(Number(raw))||Number(raw)<0||Number(raw)>100)throw Error('EQ VAS ต้องเป็นจำนวนเต็มระหว่าง 0 ถึง 100');return {levels:values.map(Number),vas:Number(raw)}}
-function score(levels){return (1000-levels.reduce((sum,level,i)=>sum+Math.round(weights[i][level-1]*1000),0))/1000}
-function render(data){const {levels,vas}=data;const profile=levels.join('');const index=score(levels);$('profile').textContent=profile;$('index').textContent=index.toFixed(3);$('vasOut').textContent=`${vas}/100`;$('summary').textContent=`รหัสสุขภาพ ${profile} ประกอบด้วยระดับ ${levels.join(', ')} ตามลำดับ 5 มิติ ค่า Index ${index.toFixed(3)} คำนวณจาก Thai value set แบบสัมประสิทธิ์ปัดเศษ และ EQ VAS ${vas}/100 เป็นการประเมินตนเอง ไม่ใช่การวินิจฉัยโรค`;$('details').replaceChildren();levels.forEach((n,i)=>{const tr=document.createElement('tr');[`${dimensions[i][1]} (${dimensions[i][2]})`,String(n),descriptions[i][n-1]].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});$('details').append(tr)});$('results').classList.remove('hidden')}
-$('assessment').addEventListener('submit',e=>{e.preventDefault();try{const data=validate();render(data);status('คำนวณสำเร็จ — โปรดตรวจสอบข้อมูลและข้อจำกัดของค่าน้ำหนัก');$('results').scrollIntoView({behavior:'smooth',block:'start'})}catch(err){$('results').classList.add('hidden');status(err.message,true)}});
-function invalidate(){ $('results').classList.add('hidden');status('ข้อมูลเปลี่ยนแปลงแล้ว กรุณากดแปลผลใหม่') }
-$('assessment').addEventListener('input',invalidate);$('assessment').addEventListener('change',invalidate);
-$('clear').addEventListener('click',()=>{$('assessment').reset();vasSlider.value='0';vasNumber.value='';$('results').classList.add('hidden');status('ล้างข้อมูลแล้ว')});
-// Built-in mathematical regression checks, no patient data involved.
-console.assert(score([1,1,1,1,1])===1,'11111 should equal 1');console.assert(score([2,1,2,3,2])===.751,'21232 should equal .751');console.assert(score([5,5,5,5,5])===-.420,'55555 rounded coefficient check');
-</script></body></html>
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #eef7ff 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family: 'Prompt', 'Noto Sans Thai', 'Segoe UI', Tahoma, sans-serif;
+      }
+
+      .page-shell {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 18px 48px;
+      }
+
+      header {
+        background: linear-gradient(135deg, var(--blue-deep), var(--blue));
+        border-radius: 22px;
+        color: white;
+        padding: 28px 26px;
+        box-shadow: var(--shadow);
+        margin-bottom: 22px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        opacity: 0.8;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+      }
+
+      main {
+        display: grid;
+        gap: 20px;
+      }
+
+      .card {
+        background: var(--panel);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(26, 92, 140, 0.06);
+        padding: 22px 20px;
+      }
+
+      .card h2,
+      .card h3,
+      .card h4 {
+        margin-top: 0;
+      }
+
+      .card h2 {
+        font-size: clamp(1.2rem, 2vw, 1.7rem);
+        margin-bottom: 12px;
+      }
+
+      .status-box {
+        min-height: 20px;
+        margin-bottom: 18px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        display: none;
+        font-size: 0.96rem;
+        border: 1px solid transparent;
+      }
+
+      .status-box.visible {
+        display: block;
+      }
+
+      .status-box.info {
+        background: #edf6ff;
+        color: var(--blue-deep);
+        border-color: #cfe4ff;
+      }
+
+      .status-box.error {
+        background: #fff0f2;
+        color: var(--danger);
+        border-color: #f4c9d1;
+      }
+
+      .status-box.success {
+        background: #eafaf3;
+        color: var(--success);
+        border-color: #c5ebd8;
+      }
+
+      .dimension-list {
+        display: grid;
+        gap: 18px;
+      }
+
+      .dimension-group {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #fbfdff;
+        padding: 16px 16px 10px;
+      }
+
+      .dimension-header {
+        margin-bottom: 12px;
+      }
+
+      .dimension-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--blue-deep);
+      }
+
+      .dimension-subtitle {
+        display: block;
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 2px;
+      }
+
+      .level-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+      }
+
+      .level-option {
+        position: relative;
+      }
+
+      .level-option input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .option-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 72px;
+        border: 1.5px solid var(--line);
+        border-radius: 14px;
+        background: white;
+        padding: 12px 14px;
+        cursor: pointer;
+        transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      .option-card:hover {
+        border-color: #9bc3dd;
+        background: #f9fcff;
+      }
+
+      .level-option input:checked + .option-card {
+        border-color: #db8bb0;
+        background: var(--pink-fill);
+        box-shadow: inset 0 0 0 1px rgba(219, 139, 176, 0.55);
+      }
+
+      .level-badge {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
+        background: #eaf2f8;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        color: var(--blue-deep);
+      }
+
+      .level-option input:checked + .option-card .level-badge {
+        background: #f2bfd3;
+        color: var(--blue-deep);
+      }
+
+      .level-text {
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: var(--text);
+      }
+
+      .vas-section {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .vas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .vas-label {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--blue-deep);
+      }
+
+      .vas-input {
+        width: 120px;
+        min-width: 120px;
+        height: 54px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1.5px solid var(--line);
+        background: #f9fbfe;
+        color: var(--blue-deep);
+        font-size: 2rem;
+        font-weight: 700;
+        text-align: center;
+        outline: none;
+      }
+
+      .vas-input:focus {
+        border-color: #9bc3dd;
+        box-shadow: 0 0 0 3px rgba(55, 125, 180, 0.12);
+      }
+
+      .vas-slider {
+        width: 100%;
+        accent-color: var(--blue);
+        margin-top: 8px;
+      }
+
+      .vas-scale {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+
+      .vas-scale .middle {
+        font-weight: 700;
+      }
+
+      .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      button {
+        border: none;
+        cursor: pointer;
+        border-radius: 12px;
+        padding: 14px 22px;
+        font-size: 1rem;
+        font-weight: 700;
+        transition: transform 0.12s ease, opacity 0.12s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .primary {
+        background: linear-gradient(135deg, var(--blue), #215b9b);
+        color: white;
+        box-shadow: 0 12px 24px rgba(27, 89, 156, 0.22);
+      }
+
+      .secondary {
+        background: #eef5fa;
+        color: var(--blue-deep);
+      }
+
+      .results.hidden {
+        display: none;
+      }
+
+      .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .metric-card {
+        background: linear-gradient(180deg, #f7fbff, #eef7ff);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px 16px;
+      }
+
+      .metric-card .label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .metric-card .value {
+        margin-top: 10px;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        font-weight: 800;
+        color: var(--blue-deep);
+      }
+
+      .metric-card .value.small {
+        font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+      }
+
+      .summary-text {
+        margin: 12px 0 18px;
+        font-size: 1rem;
+        line-height: 1.7;
+        color: var(--text);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: white;
+      }
+
+      th, td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #f3f8fc;
+        color: var(--blue-deep);
+        font-size: 0.9rem;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .report-card {
+        margin-top: 22px;
+        background: #f9fbff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px 16px;
+      }
+
+      .report-section + .report-section {
+        margin-top: 18px;
+      }
+
+      .report-section h4 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--blue-deep);
+      }
+
+      .report-section p {
+        margin: 0;
+        line-height: 1.7;
+      }
+
+      .references {
+        margin-top: 10px;
+      }
+
+      .references ul {
+        padding-left: 18px;
+        margin: 0;
+      }
+
+      .references li + li {
+        margin-top: 8px;
+      }
+
+      .references a {
+        color: var(--blue);
+      }
+
+      @media (max-width: 640px) {
+        .page-shell {
+          padding: 12px 12px 32px;
+        }
+
+        header {
+          padding: 18px 16px;
+        }
+
+        .card {
+          padding: 16px 14px;
+        }
+
+        .vas-input {
+          width: 110px;
+          min-width: 110px;
+          font-size: 1.6rem;
+        }
+
+        .level-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .vas-scale {
+          font-size: 0.76rem;
+        }
+
+        .action-row {
+          flex-direction: column;
+        }
+
+        .action-row button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header>
+        <p class="eyebrow">Thai Health Quality of Life Interpreter</p>
+        <h1>EQ-5D-5L Thai Interpreter</h1>
+      </header>
+
+      <main>
+        <section class="card">
+          <h2>แบบประเมิน EQ-5D-5L</h2>
+          <div id="statusBox" class="status-box" aria-live="polite"></div>
+
+          <form id="assessmentForm" novalidate>
+            <div id="dimensionFields" class="dimension-list"></div>
+
+            <div class="vas-section">
+              <div class="vas-header">
+                <div class="vas-label">คะแนนสุขภาพของคุณ</div>
+                <input
+                  id="vasInput"
+                  class="vas-input"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="100"
+                  step="1"
+                  aria-label="คะแนนสุขภาพของคุณ"
+                  value=""
+                />
+              </div>
+
+              <input
+                id="vasSlider"
+                class="vas-slider"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="50"
+                aria-label="Slider คะแนนสุขภาพ"
+              />
+
+              <div class="vas-scale">
+                <span>0 — แย่ที่สุด</span>
+                <span class="middle">50</span>
+                <span>100 — ดีที่สุด</span>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button type="submit" class="primary">แปลผล</button>
+              <button type="button" class="secondary" id="clearButton">ล้างข้อมูล</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="resultsSection" class="card results hidden" aria-live="polite">
+          <h2>ผลการประเมิน</h2>
+
+          <div class="results-grid">
+            <div class="metric-card">
+              <div class="label">Health State Profile</div>
+              <div id="profileValue" class="value">-</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="label">Thai EQ-5D-5L Index</div>
+              <div id="indexValue" class="value small">-</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="label">EQ VAS</div>
+              <div id="vasValue" class="value small">-</div>
+            </div>
+          </div>
+
+          <p id="summaryText" class="summary-text"></p>
+
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>มิติ</th>
+                  <th>ระดับที่เลือก</th>
+                  <th>คำอธิบายระดับคำตอบ</th>
+                </tr>
+              </thead>
+              <tbody id="detailTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="report-card">
+            <h3>สรุปผลการประเมินรายบุคคล</h3>
+
+            <div class="report-section">
+              <h4>ภาพรวมการประเมิน</h4>
+              <p id="overviewSummary"></p>
+            </div>
+
+            <div class="report-section">
+              <h4>ความหมายของคะแนน</h4>
+              <p id="scoreMeaning"></p>
+            </div>
+
+            <div class="report-section">
+              <h4>ข้อเสนอแนะสำหรับการติดตาม</h4>
+              <p id="followupAdvice"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card references">
+          <h2>อ้างอิง</h2>
+          <ul>
+            <li>Pattanaphesaj J, et al. The EQ-5D-5L valuation study in Thailand. Expert Review of Pharmacoeconomics &amp; Outcomes Research. 2018;18(5):551–558.</li>
+            <li>Thai EQ-5D-5L decrement weights used in this prototype follow the published rounded coefficients for levels 2–5 and are applied as: Index = 1 − sum of decrements.</li>
+            <li>EuroQol Research Foundation. EQ-5D-5L information and user support.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const dimensions = [
+        {
+          id: 'mobility',
+          thai: 'การเคลื่อนไหว',
+          english: 'Mobility',
+          descriptions: [
+            'ไม่มีปัญหาในการเคลื่อนไหว',
+            'มีปัญหาในการเคลื่อนไหวเล็กน้อย',
+            'มีปัญหาในการเคลื่อนไหวปานกลาง',
+            'มีปัญหาในการเคลื่อนไหวมาก',
+            'มีปัญหาในการเคลื่อนไหวอย่างมาก'
+          ]
+        },
+        {
+          id: 'selfcare',
+          thai: 'การดูแลตนเอง',
+          english: 'Self-care',
+          descriptions: [
+            'ไม่มีปัญหาในการดูแลตนเอง',
+            'มีปัญหาในการดูแลตนเองเล็กน้อย',
+            'มีปัญหาในการดูแลตนเองปานกลาง',
+            'มีปัญหาในการดูแลตนเองมาก',
+            'ไม่สามารถดูแลตนเองได้'
+          ]
+        },
+        {
+          id: 'usualactivities',
+          thai: 'กิจกรรมตามปกติ',
+          english: 'Usual activities',
+          descriptions: [
+            'ทำกิจกรรมตามปกติได้โดยไม่มีปัญหา',
+            'มีปัญหาในการทำกิจกรรมตามปกติเล็กน้อย',
+            'มีปัญหาในการทำกิจกรรมตามปกติปานกลาง',
+            'มีปัญหาในการทำกิจกรรมตามปกติมาก',
+            'ไม่สามารถทำกิจกรรมตามปกติได้'
+          ]
+        },
+        {
+          id: 'pain',
+          thai: 'ความเจ็บปวดหรือความไม่สบายตัว',
+          english: 'Pain/Discomfort',
+          descriptions: [
+            'ไม่มีความเจ็บปวดหรือความไม่สบายตัว',
+            'มีความเจ็บปวดหรือความไม่สบายตัวเล็กน้อย',
+            'มีความเจ็บปวดหรือความไม่สบายตัวปานกลาง',
+            'มีความเจ็บปวดหรือความไม่สบายตัวมาก',
+            'มีความเจ็บปวดหรือความไม่สบายตัวอย่างมาก'
+          ]
+        },
+        {
+          id: 'anxiety',
+          thai: 'ความวิตกกังวลหรือภาวะซึมเศร้า',
+          english: 'Anxiety/Depression',
+          descriptions: [
+            'ไม่มีความวิตกกังวลหรือภาวะซึมเศร้า',
+            'มีความวิตกกังวลหรือภาวะซึมเศร้าเล็กน้อย',
+            'มีความวิตกกังวลหรือภาวะซึมเศร้าในระดับปานกลาง',
+            'มีความวิตกกังวลหรือภาวะซึมเศร้าในระดับมาก',
+            'มีความวิตกกังวลหรือภาวะซึมเศร้าในระดับมากที่สุด'
+          ]
+        }
+      ];
+
+      const thaiWeights = [
+        [0, 0.066, 0.087, 0.211, 0.371],
+        [0, 0.058, 0.071, 0.193, 0.250],
+        [0, 0.058, 0.071, 0.154, 0.248],
+        [0, 0.056, 0.067, 0.207, 0.256],
+        [0, 0.058, 0.096, 0.233, 0.295]
+      ];
+
+      const dimensionFields = document.getElementById('dimensionFields');
+      const vasInput = document.getElementById('vasInput');
+      const vasSlider = document.getElementById('vasSlider');
+      const statusBox = document.getElementById('statusBox');
+      const resultsSection = document.getElementById('resultsSection');
+      const detailTableBody = document.getElementById('detailTableBody');
+      const overviewSummary = document.getElementById('overviewSummary');
+      const scoreMeaning = document.getElementById('scoreMeaning');
+      const followupAdvice = document.getElementById('followupAdvice');
+      const summaryText = document.getElementById('summaryText');
+      const profileValue = document.getElementById('profileValue');
+      const indexValue = document.getElementById('indexValue');
+      const vasValue = document.getElementById('vasValue');
+      const form = document.getElementById('assessmentForm');
+      const clearButton = document.getElementById('clearButton');
+
+      function showStatus(message, type = 'info') {
+        statusBox.textContent = message;
+        statusBox.className = 'status-box visible ' + type;
+      }
+
+      function buildDimensionOptions() {
+        dimensions.forEach((dimension, index) => {
+          const group = document.createElement('fieldset');
+          group.className = 'dimension-group';
+
+          const header = document.createElement('div');
+          header.className = 'dimension-header';
+
+          const title = document.createElement('div');
+          title.className = 'dimension-title';
+          title.textContent = `${index + 1}. ${dimension.thai}`;
+
+          const subtitle = document.createElement('span');
+          subtitle.className = 'dimension-subtitle';
+          subtitle.textContent = dimension.english;
+
+          header.appendChild(title);
+          header.appendChild(subtitle);
+
+          const levelGrid = document.createElement('div');
+          levelGrid.className = 'level-grid';
+
+          [1, 2, 3, 4, 5].forEach((level) => {
+            const option = document.createElement('label');
+            option.className = 'level-option';
+
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = dimension.id;
+            input.value = String(level);
+            input.setAttribute('aria-label', `${dimension.thai} ระดับ ${level}`);
+
+            const card = document.createElement('span');
+            card.className = 'option-card';
+
+            const badge = document.createElement('span');
+            badge.className = 'level-badge';
+            badge.textContent = String(level);
+
+            const text = document.createElement('span');
+            text.className = 'level-text';
+            text.textContent = dimension.descriptions[level - 1];
+
+            card.appendChild(badge);
+            card.appendChild(text);
+            option.appendChild(input);
+            option.appendChild(card);
+            levelGrid.appendChild(option);
+          });
+
+          group.appendChild(header);
+          group.appendChild(levelGrid);
+          dimensionFields.appendChild(group);
+        });
+      }
+
+      function getSelectedDimensionData() {
+        return dimensions.map((dimension) => {
+          const selectedRadio = document.querySelector(`input[name="${dimension.id}"]:checked`);
+          return {
+            ...dimension,
+            level: selectedRadio ? Number(selectedRadio.value) : null
+          };
+        });
+      }
+
+      function computeIndex(levels) {
+        let total = 0;
+        levels.forEach((level, index) => {
+          total += thaiWeights[index][level];
+        });
+        return Number((1 - total).toFixed(3));
+      }
+
+      function validateForm() {
+        const selected = getSelectedDimensionData();
+        const missing = selected.filter((item) => item.level === null);
+
+        if (missing.length > 0) {
+          throw new Error('กรุณาเลือกระดับคำตอบให้ครบทุกมิติก่อนแปลผล');
+        }
+
+        const rawValue = vasInput.value.trim();
+        if (rawValue === '') {
+          throw new Error('กรุณากรอกคะแนน EQ VAS ก่อนแปลผล');
+        }
+
+        const vasScore = Number(rawValue);
+        if (!Number.isInteger(vasScore) || vasScore < 0 || vasScore > 100) {
+          throw new Error('คะแนน EQ VAS ต้องอยู่ระหว่าง 0 ถึง 100');
+        }
+
+        return {
+          selected,
+          profile: selected.map((item) => item.level).join(''),
+          vas: vasScore
+        };
+      }
+
+      function getDescriptionByLevel(dimension, level) {
+        return dimension.descriptions[level - 1];
+      }
+
+      function buildPersonalSummary(selected) {
+        const affected = selected.filter((item) => item.level > 1);
+        const unaffectedCount = selected.length - affected.length;
+
+        if (affected.length === 0) {
+          return 'ผู้ตอบรายงานว่าไม่มีปัญหาในทั้ง 5 มิติของแบบประเมิน EQ-5D-5L';
+        }
+
+        const firstAffected = affected[0];
+        const firstText = `${firstAffected.thai}ระดับ ${firstAffected.level}`;
+        const firstDescription = getDescriptionByLevel(firstAffected, firstAffected.level);
+
+        if (affected.length === 1) {
+          return `ผู้ตอบระบุว่าไม่มีปัญหาใน ${unaffectedCount} มิติ และมีปัญหา 1 มิติ ได้แก่ ${firstText} ซึ่งหมายถึง${firstDescription}`;
+        }
+
+        const otherAffected = affected.slice(1).map((item) => `${item.thai}ระดับ ${item.level}`).join(' และ ');
+        return `ผู้ตอบระบุว่าไม่มีปัญหาใน ${unaffectedCount} มิติ และมีปัญหา ${affected.length} มิติ ได้แก่ ${firstText} และ ${otherAffected} ซึ่งหมายถึงมีปัญหาในหลายมิติตามที่ระบุ`;
+      }
+
+      function buildScoreMeaningText(index, vas) {
+        if (vas >= 85) {
+          return `ค่า Thai EQ-5D-5L Index เท่ากับ ${index.toFixed(3)} เป็นค่าอรรถประโยชน์ทางสุขภาพที่คำนวณจากชุดค่าน้ำหนักประเทศไทย ส่วน EQ VAS เท่ากับ ${vas} คะแนน หมายถึงผู้ตอบประเมินสุขภาพตนเองอยู่ในระดับที่ดีมาก`;
+        }
+
+        if (vas >= 50) {
+          return `ค่า Thai EQ-5D-5L Index เท่ากับ ${index.toFixed(3)} เป็นค่าอรรถประโยชน์ทางสุขภาพที่คำนวณจากชุดค่าน้ำหนักประเทศไทย ส่วน EQ VAS เท่ากับ ${vas} คะแนน หมายถึงผู้ตอบประเมินสุขภาพตนเองอยู่ในระดับปานกลาง`;
+        }
+
+        return `ค่า Thai EQ-5D-5L Index เท่ากับ ${index.toFixed(3)} เป็นค่าอรรถประโยชน์ทางสุขภาพที่คำนวณจากชุดค่าน้ำหนักประเทศไทย ส่วน EQ VAS เท่ากับ ${vas} คะแนน หมายถึงผู้ตอบประเมินสุขภาพตนเองอยู่ในระดับที่มีข้อจำกัด`;
+      }
+
+      function buildFollowUpAdvice(selected) {
+        const affected = selected.filter((item) => item.level > 1);
+        if (affected.length === 0) {
+          return 'ผู้ตอบรายงานว่ามีความเสี่ยงต่อปัญหาน้อยในทุกมิติของแบบประเมิน ดังนั้นควรติดตามสุขภาพโดยรวมต่อเนื่องและให้ความสำคัญกับการดูแลสุขภาพกายและจิตใจตามปกติ';
+        }
+
+        const adviceMap = {
+          mobility: 'สอบถามเพิ่มเติมเกี่ยวกับการเคลื่อนไหวและข้อจำกัดในการเดิน',
+          selfcare: 'ประเมินความสามารถในการดูแลตนเองและความต้องการความช่วยเหลือ',
+          usualactivities: 'ติดตามผลกระทบต่อกิจกรรมในชีวิตประจำวัน',
+          pain: 'ติดตามอาการเจ็บปวดหรือไม่สบายตัว',
+          anxiety: 'พิจารณาสอบถามสุขภาวะทางอารมณ์เพิ่มเติมอย่างเหมาะสม'
+        };
+
+        const lines = affected.map((item) => `${item.thai}: ${adviceMap[item.id]}`);
+        return lines.join(' • ');
+      }
+
+      function renderDetailTable(selected) {
+        detailTableBody.innerHTML = selected.map((item) => `
+          <tr>
+            <td>${item.thai}</td>
+            <td>ระดับ ${item.level}</td>
+            <td>${getDescriptionByLevel(item, item.level)}</td>
+          </tr>
+        `).join('');
+      }
+
+      function renderResults({ selected, profile, vas }) {
+        const index = computeIndex(selected.map((item) => item.level));
+
+        profileValue.textContent = profile;
+        indexValue.textContent = index.toFixed(3);
+        vasValue.textContent = `${vas}/100`;
+        summaryText.textContent = `Health State Profile ${profile} • Thai EQ-5D-5L Index ${index.toFixed(3)} • EQ VAS ${vas}/100`;
+
+        renderDetailTable(selected);
+        overviewSummary.textContent = buildPersonalSummary(selected);
+        scoreMeaning.textContent = buildScoreMeaningText(index, vas);
+        followupAdvice.textContent = buildFollowUpAdvice(selected);
+
+        resultsSection.classList.remove('hidden');
+        showStatus('คำนวณสำเร็จแล้ว กรุณาตรวจสอบผลลัพธ์ด้านล่าง', 'success');
+      }
+
+      function resetVas() {
+        vasInput.value = '';
+        vasSlider.value = '50';
+      }
+
+      function clearAll() {
+        form.reset();
+        dimensions.forEach((dimension) => {
+          const radio = document.querySelector(`input[name="${dimension.id}"]`);
+          if (radio) {
+            radio.checked = false;
+          }
+        });
+
+        resetVas();
+        resultsSection.classList.add('hidden');
+        detailTableBody.innerHTML = '';
+        summaryText.textContent = '';
+        profileValue.textContent = '-';
+        indexValue.textContent = '-';
+        vasValue.textContent = '-';
+        overviewSummary.textContent = '';
+        scoreMeaning.textContent = '';
+        followupAdvice.textContent = '';
+        showStatus('ล้างข้อมูลแล้ว', 'info');
+      }
+
+      function syncVasFromNumber() {
+        const raw = vasInput.value.trim();
+        if (raw === '') {
+          vasSlider.value = '50';
+          return;
+        }
+
+        const numericValue = Number(raw);
+        if (!Number.isNaN(numericValue) && numericValue >= 0 && numericValue <= 100) {
+          vasSlider.value = String(numericValue);
+        }
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        try {
+          const validated = validateForm();
+          renderResults(validated);
+        } catch (error) {
+          showStatus(error.message, 'error');
+          window.alert(error.message);
+        }
+      });
+
+      clearButton.addEventListener('click', clearAll);
+
+      vasInput.addEventListener('input', () => {
+        const raw = vasInput.value.trim();
+
+        if (raw === '') {
+          vasSlider.value = '50';
+          return;
+        }
+
+        const numericValue = Number(raw);
+        if (Number.isNaN(numericValue) || numericValue < 0 || numericValue > 100) {
+          vasSlider.value = '50';
+          return;
+        }
+
+        vasSlider.value = String(Math.round(numericValue));
+      });
+
+      vasSlider.addEventListener('input', () => {
+        const numericValue = Number(vasSlider.value);
+        vasInput.value = String(numericValue);
+      });
+
+      form.addEventListener('input', () => {
+        if (!resultsSection.classList.contains('hidden')) {
+          resultsSection.classList.add('hidden');
+        }
+      });
+
+      form.addEventListener('change', () => {
+        if (!resultsSection.classList.contains('hidden')) {
+          resultsSection.classList.add('hidden');
+        }
+      });
+
+      buildDimensionOptions();
+      resetVas();
+      showStatus('กรุณาเลือกคำตอบทั้ง 5 มิติและกรอกคะแนน EQ VAS ก่อนแปลผล', 'info');
+    </script>
+  </body>
+</html>
